@@ -259,6 +259,7 @@ class MainWindow(QMainWindow):
 class AppWindows(QMainWindow):
     def __init__(self):
         super(AppWindows, self).__init__()
+        # self.setWindowTitle("Darts For Czigi")
         widget = QWidget()
         main_layout = QVBoxLayout()
         widget.setLayout(main_layout)
