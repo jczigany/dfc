@@ -1,49 +1,12 @@
 from datetime import datetime
+from operator import itemgetter
+
 from database.db import MysqlClient
 # from PySide2.QtGui import QColor, QIcon
 from PySide2.QtWidgets import QMainWindow, QTableView, QWidget, QApplication, QVBoxLayout, QHBoxLayout, QPushButton, \
     QFormLayout, QDialog, QLineEdit, QDialogButtonBox, QAction
 from PySide2.QtCore import QAbstractTableModel, Qt, QRect
 from PySide2.QtCore import *
-from menus import create_menus
-from teams import manageTeams
-# from slots import create_slots
-
-
-from operator import itemgetter
-
-import sys
-
-client = MysqlClient()
-
-
-class MyFormDialog(QDialog):
-    """ A fogadott paraméter (table) alapján állítjuk össze a form-ot.
-        Lekérdezzük a tábla struktúrát és összerakjuk a mezőnevek listáját,
-        kihagyva a Primary mező-nevet. Ezek lesznek a LABEl-ek. A mező értékeket
-        szintén egy LIST-ben tárojuk a későbbi feldolgozás lehetővé tétele érdekében"""
-
-    def __init__(self, table):
-        super(MyFormDialog, self).__init__()
-        self.table = table
-        mezo_nevek = []
-        self.mezo_ertekek = []
-        all_rows2 = client.get_mezonevek(self.table)
-        for row in all_rows2:
-            if 'PRI' not in row:
-                mezo_nevek.append(row[0])
-        self.layout = QFormLayout()
-        self.setLayout(self.layout)
-        for i in range(len(mezo_nevek)):
-            mezo = QLineEdit()
-            self.mezo_ertekek.append(mezo)
-            self.layout.addRow(f"{mezo_nevek[i]}", self.mezo_ertekek[i])
-
-        buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttonbox.accepted.connect(self.accept)
-        buttonbox.rejected.connect(self.reject)
-        self.layout.addWidget(buttonbox)
-
 
 class TableModel(QAbstractTableModel):
     """ Az AbstractModel közvetlenül nem példányosítható. Elöször saját class-t származtatunk,
@@ -213,88 +176,3 @@ class TableModel(QAbstractTableModel):
             self.layoutAboutToBeChanged.emit()
             self._data.append(temp_data)
             self.layoutChanged.emit()
-
-
-class MainWindow(QMainWindow):
-    """ Példányosítunk egy view-t.
-        Pépldányosítunk egy model-t.
-        Hozzárendeljük a model-t a view-hoz (setModel)"""
-    def __init__(self):
-        super(MainWindow, self).__init__()
-        widget = QWidget()
-        main_layout = QVBoxLayout()
-        widget.setLayout(main_layout)
-        self.setCentralWidget(widget)
-        self.client = MysqlClient()
-        self.table_view = QTableView()
-        # a megjelenített tábla neve
-        self.table_name = "players"
-
-        main_layout.addWidget(self.table_view)
-        self.model = TableModel(self.table_name)
-
-        self.table_view.setModel(self.model)
-        self.table_view.setSortingEnabled(True)
-        # Az első oszlop (id) elrejtése
-        self.table_view.hideColumn(0)
-        # Ha a következő sor kommentelve van, akkor billentyűre is edit-módba lép. Egyébként csak dupla-klikk-re
-        # self.table.setEditTriggers(QAbstractItemView.DoubleClicked)
-
-        gomb_layout = QHBoxLayout()
-        main_layout.addLayout(gomb_layout)
-
-        self.delete_button = QPushButton("&Delete Record")
-        self.add_button = QPushButton("&Add New Record")
-        self.modify_button = QPushButton("&Modify Record")
-
-        gomb_layout.addWidget(self.delete_button)
-        gomb_layout.addWidget(self.add_button)
-        gomb_layout.addWidget(self.modify_button)
-
-        self.delete_button.clicked.connect(lambda: self.model.delete(self.table_view.selectedIndexes()[0]))
-        self.add_button.clicked.connect(self.model.add)
-        self.modify_button.clicked.connect(self.modify)
-
-    def modify(self):
-        pass
-
-
-class AppWindows(QMainWindow):
-    def __init__(self):
-        super(AppWindows, self).__init__()
-        self.setWindowTitle("Darts For G.D.C powered by Jcigi")
-        self.resize(800,600)
-        widget = QWidget()
-        main_layout = QVBoxLayout()
-        widget.setLayout(main_layout)
-        self.setCentralWidget(widget)
-        # A menus.py definiálja a menüpontokat
-        # create_slots(self)
-        create_menus(self)
-
-        self.client = MysqlClient()
-
-    @Slot()
-    # def exit_app(self, checked):
-    def exit_app(self):
-        QApplication.quit()
-
-    @Slot()
-    def new_player(self):
-        print("Új játékos dialog")
-
-    @Slot()
-    def new_team(self):
-        print("Új Csapat dialog")
-        maname_tems_window = manageTeams(self)
-        maname_tems_window.show()
-
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    # win = MainWindow()
-    win = AppWindows()
-    win.show()
-    app.exec_()
-    # print('\n'.join(repr(w) for w in app.allWidgets()))
