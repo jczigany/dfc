@@ -2,9 +2,11 @@ from datetime import datetime
 from database.db import MysqlClient
 # from PySide2.QtGui import QColor, QIcon
 from PySide2.QtWidgets import QMainWindow, QTableView, QWidget, QApplication, QVBoxLayout, QHBoxLayout, QPushButton, \
-    QFormLayout, QDialog, QLineEdit, QDialogButtonBox
+    QFormLayout, QDialog, QLineEdit, QDialogButtonBox, QAction
 from PySide2.QtCore import QAbstractTableModel, Qt, QRect
 from PySide2.QtCore import *
+from menus import create_menus
+# from slots import create_slots
 
 
 from operator import itemgetter
@@ -259,12 +261,31 @@ class MainWindow(QMainWindow):
 class AppWindows(QMainWindow):
     def __init__(self):
         super(AppWindows, self).__init__()
-        # self.setWindowTitle("Darts For Czigi")
+        self.setWindowTitle("Darts For G.D.C powered by Jcigi")
+        self.resize(800,600)
         widget = QWidget()
         main_layout = QVBoxLayout()
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)
+        # A menus.py definiálja a menüpontokat
+        # create_slots(self)
+        create_menus(self)
+
         self.client = MysqlClient()
+
+    @Slot()
+    # def exit_app(self, checked):
+    def exit_app(self):
+        QApplication.quit()
+
+    @Slot()
+    def new_player(self):
+        print("Új játékos dialog")
+
+    @Slot()
+    def new_team(self):
+        print("Új Csapat dialog")
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
