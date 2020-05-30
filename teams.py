@@ -1,19 +1,9 @@
-from datetime import datetime
-
 from PySide2.QtGui import QIcon
-
-from database.db import MysqlClient
-# from PySide2.QtGui import QColor, QIcon
-from PySide2.QtWidgets import QMainWindow, QTableView, QWidget, QApplication, QVBoxLayout, QHBoxLayout, QPushButton, \
-    QFormLayout, QDialog, QLineEdit, QDialogButtonBox, QAction, QSpacerItem, QSizePolicy
-from PySide2.QtCore import QAbstractTableModel, Qt, QRect
+from PySide2.QtWidgets import QMainWindow, QTableView, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+    QAction, QSpacerItem, QSizePolicy, QMessageBox
 from PySide2.QtCore import *
-from menus import create_menus
 from modell import TableModel
-
-
-
-
+from database.db import MysqlClient
 
 class manageTeams(QMainWindow):
     def __init__(self, parent):
@@ -44,8 +34,8 @@ class manageTeams(QMainWindow):
         gomb_layout = QVBoxLayout()
         main_layout.addLayout(gomb_layout)
 
-        self.delete_button = QPushButton("&Delete Record")
-        self.add_button = QPushButton("&Add New Record")
+        self.delete_button = QPushButton("&Csapat törlése")
+        self.add_button = QPushButton("&Új csapat")
         self.modify_button = QPushButton("&Modify Record")
 
         gomb_layout.addWidget(self.delete_button)
@@ -63,9 +53,16 @@ class manageTeams(QMainWindow):
         tb.actionTriggered[QAction].connect(self.toolbarpressed)
         tb.addAction(exit)
 
-        self.delete_button.clicked.connect(lambda: self.model.delete(self.table_view.selectedIndexes()[0]))
+        # self.delete_button.clicked.connect(lambda: self.model.delete(self.table_view.selectedIndexes()[0]))
+        self.delete_button.clicked.connect(self.csapat_torles)
         self.add_button.clicked.connect(self.model.add)
         # self.modify_button.clicked.connect(self.modify)
+
+    def csapat_torles(self):
+        if len(self.table_view.selectedIndexes()) > 0:
+            self.model.delete(self.table_view.selectedIndexes()[0])
+        else:
+            reply = QMessageBox.question(None, 'Hiba!', 'Törlés előtt válasszon csapatot!', QMessageBox.Ok)
 
     def toolbarpressed(self, a):
         print("Pressed:", a.text())

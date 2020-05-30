@@ -22,13 +22,13 @@ def create_menus(self):
     self.tools_menu = self.menu.addMenu("Eszközök")
 
     # Új Játékos action
-    new_player_action = QAction("Új Játékos", self)
+    new_player_action = QAction("Játékosok kezelése", self)
     new_player_action.setShortcut("Ctrl+P")
     new_player_action.triggered.connect(self.new_player)
     self.tools_menu.addAction(new_player_action)
 
     # Új Csapat action
-    new_team_action = QAction("Új Csapat", self)
+    new_team_action = QAction("Csapatok kezelése", self)
     new_team_action.setShortcut("Ctrl+T")
     new_team_action.triggered.connect(self.new_team)
     self.tools_menu.addAction(new_team_action)
