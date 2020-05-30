@@ -4,9 +4,39 @@ from operator import itemgetter
 from database.db import MysqlClient
 # from PySide2.QtGui import QColor, QIcon
 from PySide2.QtWidgets import QMainWindow, QTableView, QWidget, QApplication, QVBoxLayout, QHBoxLayout, QPushButton, \
-    QFormLayout, QDialog, QLineEdit, QDialogButtonBox, QAction
+    QFormLayout, QDialog, QLineEdit, QDialogButtonBox, QAction, QMessageBox
 from PySide2.QtCore import QAbstractTableModel, Qt, QRect
 from PySide2.QtCore import *
+
+client = MysqlClient()
+
+class MyFormDialog(QDialog):
+    """ A fogadott paraméter (table) alapján állítjuk össze a form-ot.
+        Lekérdezzük a tábla struktúrát és összerakjuk a mezőnevek listáját,
+        kihagyva a Primary mező-nevet. Ezek lesznek a LABEl-ek. A mező értékeket
+        szintén egy LIST-ben tárojuk a későbbi feldolgozás lehetővé tétele érdekében"""
+
+    def __init__(self, table):
+        super(MyFormDialog, self).__init__()
+        self.table = table
+        mezo_nevek = []
+        self.mezo_ertekek = []
+        all_rows2 = client.get_mezonevek(self.table)
+        for row in all_rows2:
+            if 'PRI' not in row:
+                mezo_nevek.append(row[0])
+        self.layout = QFormLayout()
+        self.setLayout(self.layout)
+        for i in range(len(mezo_nevek)):
+            mezo = QLineEdit()
+            self.mezo_ertekek.append(mezo)
+            self.layout.addRow(f"{mezo_nevek[i]}", self.mezo_ertekek[i])
+
+        buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttonbox.accepted.connect(self.accept)
+        buttonbox.rejected.connect(self.reject)
+        self.layout.addWidget(buttonbox)
+
 
 class TableModel(QAbstractTableModel):
     """ Az AbstractModel közvetlenül nem példányosítható. Elöször saját class-t származtatunk,
@@ -16,9 +46,10 @@ class TableModel(QAbstractTableModel):
     rowCount: Hány sora lesz a táblázatnak (az adatok alapján)
     columnCount: Hány oszlopa lesz a táblázatnak (az adatok alapján)"""
 
-    def __init__(self, table):
+    def __init__(self, table, fejlec = None):
         super(TableModel, self).__init__()
         self.table = table
+        self.fejlec = fejlec
         self.client = MysqlClient()
         self.load_data(self.table)
 
@@ -34,7 +65,8 @@ class TableModel(QAbstractTableModel):
     def load_data(self, table):
         self.adatok = self.client.get_all(table)
         self._data = self.adatok[0]
-        self.fejlec = self.adatok[1]
+        if not self.fejlec:
+            self.fejlec = self.adatok[1]
 
     def setData(self, index, value, role):
         if role == Qt.EditRole:
@@ -154,10 +186,14 @@ class TableModel(QAbstractTableModel):
                 for i in range(0, len(self.fejlec)):
                     if id_name == self.fejlec[i]:
                         torlendo_ertek = self._data[index.row()][i]
-        # rekord törlése a model-ből és a db-ből
-        del self._data[index.row()]
-        self.layoutChanged.emit()
-        self.client.delete_rekord(self.table, torlendo_ertek)
+
+        reply = QMessageBox.question(None, 'Csapat törlése!', 'A kiválasztott \
+csapat törlésére készül.\n A törlés nem visszavonható!\n Biztos benne?', QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            # rekord törlése a model-ből és a db-ből
+            del self._data[index.row()]
+            self.layoutChanged.emit()
+            self.client.delete_rekord(self.table, torlendo_ertek)
 
         return
 
